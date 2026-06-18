@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EcoTrace | Carbon Footprint Awareness Platform</title>
+  <meta name="description" content="A gamified, responsive Carbon Footprint Awareness Platform to track daily carbon expenditures, earn badges, and join the community ledger.">
+  
+  <!-- Tailwind CSS Play CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            slate: {
+              950: '#0b0f19',
+            },
+            emerald: {
+              400: '#34d399',
+              500: '#10b981',
+              600: '#059669',
+            }
+          },
+          fontFamily: {
+            sans: ['Outfit', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
+  <!-- Sentry CDN Loader -->
+  <script src="https://js.sentry-cdn.com/a1d38cf8ae5ea3059e6100341ef1c32f.min.js" crossorigin="anonymous"></script>
+  
+  <!-- Custom Stylesheet -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="h-full bg-slate-950 text-slate-100 antialiased flex flex-col">
+
+  <!-- Main Workspace Layout -->
+  <div class="flex flex-col md:flex-row h-full w-full overflow-hidden">
+    
+    <!-- STICKY SIDEBAR NAVIGATION -->
+    <aside class="w-full md:w-64 bg-slate-900/90 border-b md:border-b-0 md:border-r border-slate-800 flex flex-col shrink-0 z-30" aria-label="Main Navigation">
+      <div class="p-6 flex items-center gap-3 border-b border-slate-800">
+        <!-- Leaf SVG Logo -->
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m12.728 12.728l.707.707M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 9c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 9V7m0 10v2m-3-1a1 1 0 100-2 1 1 0 000 2zm6-4a1 1 0 100-2 1 1 0 000 2z" />
+        </svg>
+        <div>
+          <h1 class="text-xl font-bold tracking-tight text-white flex items-center gap-1">
+            EcoTrace <span class="text-xs bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full font-normal">v1.2</span>
+          </h1>
+          <p class="text-xs text-slate-400">Carbon Footprint Awareness</p>
+        </div>
+      </div>
+      
+      <!-- Nav Links -->
+      <nav class="flex-1 p-4 space-y-1.5 overflow-y-auto" aria-label="Sidebar Menu">
+        <button id="nav-quiz" class="sidebar-link w-full text-left flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800 transition active" aria-controls="panel-quiz">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span class="font-medium">Intake Quiz</span>
+        </button>
+        
+        <button id="nav-dashboard" class="sidebar-link w-full text-left flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800 transition" aria-controls="panel-dashboard">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+          </svg>
+          <span class="font-medium">Tracker Dashboard</span>
+        </button>
+
+        <button id="nav-insights" class="sidebar-link w-full text-left flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800 transition" aria-controls="panel-insights">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l.707-.707m2.828 9.9a5 5 0 113.536 0V21h-2v-3.757z" />
+          </svg>
+          <span class="font-medium">Habits & Badges</span>
+        </button>
+
+        <button id="nav-ledger" class="sidebar-link w-full text-left flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800 transition" aria-controls="panel-ledger">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          <span class="font-medium">Community Ledger</span>
+        </button>
+      </nav>
+
+      <!-- Mini Profile Summary in Sidebar -->
+      <div class="p-4 border-t border-slate-800 hidden md:block">
+        <div class="flex items-center gap-3 bg-slate-950/40 p-3 rounded-xl border border-slate-800/60">
+          <div class="h-10 w-10 rounded-full bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center font-bold text-emerald-400">
+            ME
+          </div>
+          <div class="overflow-hidden">
+            <p class="text-sm font-semibold text-slate-200 truncate">Eco Explorer</p>
+            <p class="text-xs text-slate-400 truncate flex items-center gap-1">
+              <span id="sidebar-streak-display">🔥 0 Streak</span>
+            </p>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- CONTENT WORKSPACE CONTAINER -->
+    <main class="flex-1 flex flex-col overflow-hidden relative">
+      
+      <!-- Top Action Status Bar -->
+      <header class="h-16 border-b border-slate-800 bg-slate-900/40 px-6 flex items-center justify-between shrink-0 z-10">
+        <div class="flex items-center gap-4">
+          <h2 id="view-title" class="text-lg font-bold text-white">Gamified Intake Quiz</h2>
+        </div>
+        <div class="flex items-center gap-4">
+          <!-- Daily Emission Tracker Badge -->
+          <div class="hidden sm:flex items-center gap-2 bg-slate-900/60 border border-slate-800 px-3 py-1.5 rounded-xl text-xs">
+            <span class="text-slate-400 font-medium">Daily Score:</span>
+            <span id="top-score-display" class="font-bold text-emerald-400">-- kg CO₂e</span>
+          </div>
+          <!-- Eco Points Badge -->
+          <div class="flex items-center gap-2 bg-slate-900/60 border border-slate-800 px-3 py-1.5 rounded-xl text-xs">
+            <span class="text-slate-400 font-medium">Eco Points:</span>
+            <span id="top-points-display" class="font-bold text-yellow-500">0 pts</span>
+          </div>
+        </div>
+      </header>
+
+      <!-- Main Panels Workspace (Scrollable) -->
+      <div class="flex-1 overflow-y-auto p-6 md:p-8 space-y-8" id="panels-container">
+        
+        <!-- MODULE A: GAMIFIED INTAKE QUIZ -->
+        <section id="panel-quiz" class="animate-fade-in space-y-6 max-w-3xl mx-auto" aria-labelledby="quiz-heading">
+          <header class="text-center space-y-2">
+            <span class="text-xs font-semibold uppercase tracking-wider text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-full">Intake Form</span>
+            <h3 id="quiz-heading" class="text-3xl font-extrabold text-white">Assess Your Carbon footprint</h3>
+            <p class="text-slate-400 max-w-xl mx-auto">Complete this simple 5-step questionnaire to establish your daily greenhouse gas emissions and set your baseline targets.</p>
+          </header>
+
+          <!-- Quiz Multi-Step Card Wrapper -->
+          <div class="glass-panel rounded-2xl border border-slate-800/80 p-8 shadow-2xl relative overflow-hidden">
+            
+            <!-- Steps Progress Bar Indicators -->
+            <div class="flex items-center justify-between mb-8 relative">
+              <div class="absolute left-0 right-0 top-1/2 h-0.5 bg-slate-800 -translate-y-1/2 z-0"></div>
+              <div id="quiz-progress-line" class="absolute left-0 top-1/2 h-0.5 bg-emerald-500 -translate-y-1/2 z-0 transition-all duration-300" style="width: 0%;"></div>
+              
+              <!-- Progress steps (interactive via click if completed or sequentially) -->
+              <div class="relative z-10 flex flex-col items-center">
+                <div class="step-dot h-8 w-8 rounded-full bg-emerald-500 border border-slate-950 text-white font-bold flex items-center justify-center text-sm transition-all duration-300">1</div>
+                <span class="text-[10px] text-emerald-400 mt-1.5 font-medium">Commute</span>
+              </div>
+              <div class="relative z-10 flex flex-col items-center">
+                <div class="step-dot h-8 w-8 rounded-full bg-slate-800 border border-slate-950 text-slate-400 font-bold flex items-center justify-center text-sm transition-all duration-300">2</div>
+                <span class="text-[10px] text-slate-400 mt-1.5 font-medium">Diet</span>
+              </div>
+              <div class="relative z-10 flex flex-col items-center">
+                <div class="step-dot h-8 w-8 rounded-full bg-slate-800 border border-slate-950 text-slate-400 font-bold flex items-center justify-center text-sm transition-all duration-300">3</div>
+                <span class="text-[10px] text-slate-400 mt-1.5 font-medium">Energy</span>
+              </div>
+              <div class="relative z-10 flex flex-col items-center">
+                <div class="step-dot h-8 w-8 rounded-full bg-slate-800 border border-slate-950 text-slate-400 font-bold flex items-center justify-center text-sm transition-all duration-300">4</div>
+                <span class="text-[10px] text-slate-400 mt-1.5 font-medium">Shopping</span>
+              </div>
+              <div class="relative z-10 flex flex-col items-center">
+                <div class="step-dot h-8 w-8 rounded-full bg-slate-800 border border-slate-950 text-slate-400 font-bold flex items-center justify-center text-sm transition-all duration-300">5</div>
+                <span class="text-[10px] text-slate-400 mt-1.5 font-medium">Waste</span>
+              </div>
+            </div>
+
+            <!-- Quiz Questions Form -->
+            <form id="intake-quiz-form" class="space-y-6" onsubmit="return false;">
+              
+              <!-- STEP 1: COMMUTE -->
+              <div class="quiz-step space-y-6 animate-scale-in" data-step="1">
+                <div class="space-y-2">
+                  <h4 class="text-xl font-bold text-white flex items-center gap-2">
+                    <span class="text-emerald-400 font-mono">Q1.</span> How do you primarily commute to work or school?
+                  </h4>
+                  <p class="text-sm text-slate-400">Transport represents the largest single source of personal greenhouse gas emissions.</p>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <label class="glass-panel-interactive p-5 rounded-xl border border-slate-800 flex items-start gap-4 cursor-pointer relative">
+                    <input type="radio" name="commute" value="car_suv" class="sr-only peer" required checked>
+                    <div class="h-5 w-5 rounded-full border border-slate-600 peer-checked:border-emerald-500 peer-checked:bg-emerald-500/20 flex items-center justify-center shrink-0 mt-0.5 transition">
+                      <div class="h-2.5 w-2.5 rounded-full bg-emerald-500 opacity-0 peer-checked:opacity-100 transition"></div>
+                    </div>
+                    <div>
+                      <h5 class="font-bold text-white text-base">Single Car (Gas/SUV)</h5>
+                      <p class="text-xs text-slate-400 mt-1">Driving alone daily in a gasoline engine passenger car. (+8.0 kg CO₂e/day)</p>
+                    </div>
+                  </label>
+                  
+                  <label class="glass-panel-interactive p-5 rounded-xl border border-slate-800 flex items-start gap-4 cursor-pointer relative">
+                    <input type="radio" name="commute" value="car_hybrid" class="sr-only peer">
+                    <div class="h-5 w-5 rounded-full border border-slate-600 peer-checked:border-emerald-500 peer-checked:bg-emerald-500/20 flex items-center justify-center shrink-0 mt-0.5 transition">
+                      <div class="h-2.5 w-2.5 rounded-full bg-emerald-500 opacity-0 peer-checked:opacity-100 transition"></div>
+                    </div>
+                    <div>
+                      <h5 class="font-bold text-white text-base">Electric/Hybrid Vehicle</h5>
+                      <p class="text-xs text-slate-400 mt-1">Commuting in an EV or hybrid vehicle. (+3.0 kg CO₂e/day)</p>
+                    </div>
+                  </label>
+
+                  <label class="glass-panel-interactive p-5 rounded-xl border border-slate-800 flex items-start gap-4 cursor-pointer relative">
+                    <input type="radio" name="commute" value="public" class="sr-only peer">
+                    <div class="h-5 w-5 rounded-full border border-slate-600 peer-checked:border-emerald-500 peer-checked:bg-emerald-500/20 flex items-center justify-center shrink-0 mt-0.5 transition">
+                      <div class="h-2.5 w-2.5 rounded-full bg-emerald-500 opacity-0 peer-checked:opacity-100 transition"></div>
+                    </div>
+                    <div>
+                      <h5 class="font-bold text-white text-base">Public Transit (Train/Bus)</h5>
+                      <p class="text-xs text-slate-400 mt-1">Taking urban buses or light-rail transit systems. (+1.5 kg CO₂e/day)</p>
+                    </div>
+                  </label>
+
+                  <label class="glass-panel-interactive p-5 rounded-xl border border-slate-800 flex items-start gap-4 cursor-pointer relative">
+                    <input type="radio" name="commute" value="active" class="sr-only peer">
+                    <div class="h-5 w-5 rounded-full border border-slate-600 peer-checked:border-emerald-500 peer-checked:bg-emerald-500/20 flex items-center justify-center shrink-0 mt-0.5 transition">
+                      <div class="h-2.5 w-2.5 rounded-full bg-emerald-500 opacity-0 peer-checked:opacity-100 transition"></div>
+                    </div>
+                    <div>
+                      <h5 class="font-bold text-white text-base">Active Travel / Remote</h5>
+                      <p class="text-xs text-slate-400 mt-1">Walking, bicycling, or telecommuting from home. (+0.1 kg CO₂e/day)</p>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              <!-- STEP 2: DIET -->
+              <div class="quiz-step space-y-6 hidden animate-scale-in" data-step="2">
+                <div class="space-y-2">
+                  <h4 class="text-xl font-bold text-white flex items-center gap-2">
+                    <span class="text-emerald-400 font-mono">Q2.</span> What does your typical daily diet look like?
+                  </h4>
+                  <p class="text-sm text-slate-400">Meat production, particularly beef and lamb, has a heavy environmental footprint.</p>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <label class="glass-panel-interactive p-5 rounded-xl border border-slate-800 flex items-start gap-4 cursor-pointer">
+                    <input type="radio" name="diet" value="heavy_meat" class="sr-only peer" checked>
+                    <div class="h-5 w-5 rounded-full border border-slate-600 peer-checked:border-emerald-500 peer-checked:bg-emerald-500/20 flex items-center justify-center shrink-0 mt-0.5 transition">
+                      <div class="h-2.5 w-2.5 rounded-full bg-emerald-500 opacity-0 peer-checked:opacity-100 transition"></div>
+                    </div>
+                    <div>
+                      <h5 class="font-bold text-white text-base">Frequent Meat Eater</h5>
+                      <p class="text-xs text-slate-400 mt-1">Consuming beef, pork, or lamb almost daily. (+7.5 kg CO₂e/day)</p>
+                    </div>
+                  </label>
+                  
+                  <label class="glass-panel-interactive p-5 rounded-xl border border-slate-800 flex items-start gap-4 cursor-pointer">
+                    <input type="radio" name="diet" value="balanced" class="sr-only peer">
+                    <div class="h-5 w-5 rounded-full border border-slate-600 peer-checked:border-emerald-500 peer-checked:bg-emerald-500/20 flex items-center justify-center shrink-0 mt-0.5 transition">
+                      <div class="h-2.5 w-2.5 rounded-full bg-emerald-500 opacity-0 peer-checked:opacity-100 transition"></div>
+                    </div>
+                    <div>
+                      <h5 class="font-bold text-white text-base">Low-Meat / Flexitarian</h5>
+                      <p class="text-xs text-slate-400 mt-1">Consuming white meat (poultry/fish) and occasional red meat. (+4.0 kg CO₂e/day)</p>
+                    </div>
+                  </label>
+
+                  <label class="glass-panel-interactive p-5 rounded-xl border border-slate-800 flex items-start gap-4 cursor-pointer">
+                    <input type="radio" name="diet" value="vegetarian" class="sr-only peer">
+                    <div class="h-5 w-5 rounded-full border border-slate-600 peer-checked:border-emerald-500 peer-checked:bg-emerald-500/20 flex items-center justify-center shrink-0 mt-0.5 transition">
+                      <div class="h-2.5 w-2.5 rounded-full bg-emerald-500 opacity-0 peer-checked:opacity-100 transition"></div>
+                    </div>
+                    <div>
+                      <h5 class="font-bold text-white text-base">Vegetarian</h5>
+                      <p class="text-xs text-slate-400 mt-1">Eating dairy/eggs but entirely excluding meat. (+2.5 kg CO₂e/day)</p>
+                    </div>
+                  </label>
+
+                  <label class="glass-panel-interactive p-5 rounded-xl border border-slate-800 flex items-start gap-4 cursor-pointer">
+                    <input type="radio" name="diet" value="vegan" class="sr-only peer">
+                    <div class="h-5 w-5 rounded-full border border-slate-600 peer-checked:border-emerald-500 peer-checked:bg-emerald-500/20 flex items-center justify-center shrink-0 mt-0.5 transition">
+                      <div class="h-2.5 w-2.5 rounded-full bg-emerald-500 opacity-0 peer-checked:opacity-100 transition"></div>
+                    </div>
+                    <div>
+                      <h5 class="font-bold text-white text-base">Vegan / Plant-Based</h5>
+                      <p class="text-xs text-slate-400 mt-1">Eating exclusively plant-derived foods. (+1.2 kg CO₂e/day)</p>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              <!-- STEP 3: HOME ENERGY -->
+              <div class="quiz-step space-y-6 hidden animate-scale-in" data-step="3">
+                <div class="space-y-2">
+                  <h4 class="text-xl font-bold text-white flex items-center gap-2">
+                    <span class="text-emerald-400 font-mono">Q3.</span> What is the primary source of heating/power in your home?
+                  </h4>
+                  <p class="text-sm text-slate-400">Heating, cooling, and lighting power grids vary dramatically in pollution level.</p>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <label class="glass-panel-interactive p-5 rounded-xl border border-slate-800 flex items-start gap-4 cursor-pointer">
+                    <input type="radio" name="energy" value="coal_gas" class="sr-only peer" checked>
+                    <div class="h-5 w-5 rounded-full border border-slate-600 peer-checked:border-emerald-500 peer-checked:bg-emerald-500/20 flex items-center justify-center shrink-0 mt-0.5 transition">
+                      <div class="h-2.5 w-2.5 rounded-full bg-emerald-500 opacity-0 peer-checked:opacity-100 transition"></div>
+                    </div>
+                    <div>
+                      <h5 class="font-bold text-white text-base">Standard Grid (Fossil Fuels)</h5>
+                      <p class="text-xs text-slate-400 mt-1">Standard grid mixture dominated by coal or gas boilers. (+6.5 kg CO₂e/day)</p>
+                    </div>
+                  </label>
+                  
+                  <label class="glass-panel-interactive p-5 rounded-xl border border-slate-800 flex items-start gap-4 cursor-pointer">
+                    <input type="radio" name="energy" value="smart_thermostat" class="sr-only peer">
+                    <div class="h-5 w-5 rounded-full border border-slate-600 peer-checked:border-emerald-500 peer-checked:bg-emerald-500/20 flex items-center justify-center shrink-0 mt-0.5 transition">
+                      <div class="h-2.5 w-2.5 rounded-full bg-emerald-500 opacity-0 peer-checked:opacity-100 transition"></div>
+                    </div>
+                    <div>
+                      <h5 class="font-bold text-white text-base">Grid with Smart Thermostat</h5>
+                      <p class="text-xs text-slate-400 mt-1">Fossil-grid but optimized with smart thermostats and heat insulation. (+4.5 kg CO₂e/day)</p>
+                    </div>
+                  </label>
+
+                  <label class="glass-panel-interactive p-5 rounded-xl border border-slate-800 flex items-start gap-4 cursor-pointer">
+                    <input type="radio" name="energy" value="nuclear_wind" class="sr-only peer">
+                    <div class="h-5 w-5 rounded-full border border-slate-600 peer-checked:border-emerald-500 peer-checked:bg-emerald-500/20 flex items-center justify-center shrink-0 mt-0.5 transition">
+                      <div class="h-2.5 w-2.5 rounded-full bg-emerald-500 opacity-0 peer-checked:opacity-100 transition"></div>
+                    </div>
+                    <div>
+                      <h5 class="font-bold text-white text-base">Green Tariff Electricity</h5>
+                      <p class="text-xs text-slate-400 mt-1">100% clean wind, hydro, or nuclear tariff contract from utility supplier. (+2.0 kg CO₂e/day)</p>
+                    </div>
+                  </label>
+
+                  <label class="glass-panel-interactive p-5 rounded-xl border border-slate-800 flex items-start gap-4 cursor-pointer">
+                    <input type="radio" name="energy" value="solar" class="sr-only peer">
+                    <div class="h-5 w-5 rounded-full border border-slate-600 peer-checked:border-emerald-500 peer-checked:bg-emerald-500/20 flex items-center justify-center shrink-0 mt-0.5 transition">
+                      <div class="h-2.5 w-2.5 rounded-full bg-emerald-500 opacity-0 peer-checked:opacity-100 transition"></div>
+                    </div>
+                    <div>
+                      <h5 class="font-bold text-white text-base">Self-Sufficient Solar / Heat Pump</h5>
+                      <p class="text-xs text-slate-400 mt-1">Rooftop photovoltaics + home battery backup, geothermal heating. (+0.5 kg CO₂e/day)</p>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              <!-- STEP 4: SHOPPING -->
+              <div class="quiz-step space-y-6 hidden animate-scale-in" data-step="4">
+                <div class="space-y-2">
+                  <h4 class="text-xl font-bold text-white flex items-center gap-2">
+                    <span class="text-emerald-400 font-mono">Q4.</span> How often do you buy new goods (clothes, gadgets, decor)?
+                  </h4>
+                  <p class="text-sm text-slate-400">Manufacture and logistics footprint accounts for a massive amount of hidden CO₂ emission.</p>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <label class="glass-panel-interactive p-5 rounded-xl border border-slate-800 flex items-start gap-4 cursor-pointer">
+                    <input type="radio" name="shopping" value="heavy" class="sr-only peer" checked>
+                    <div class="h-5 w-5 rounded-full border border-slate-600 peer-checked:border-emerald-500 peer-checked:bg-emerald-500/20 flex items-center justify-center shrink-0 mt-0.5 transition">
+                      <div class="h-2.5 w-2.5 rounded-full bg-emerald-500 opacity-0 peer-checked:opacity-100 transition"></div>
+                    </div>
+                    <div>
+                      <h5 class="font-bold text-white text-base">Frequent Buyer</h5>
+                      <p class="text-xs text-slate-400 mt-1">Regularly purchasing new fashion items, online deliveries weekly. (+4.0 kg CO₂e/day)</p>
+                    </div>
+                  </label>
+                  
+                  <label class="glass-panel-interactive p-5 rounded-xl border border-slate-800 flex items-start gap-4 cursor-pointer">
+                    <input type="radio" name="shopping" value="average" class="sr-only peer">
+                    <div class="h-5 w-5 rounded-full border border-slate-600 peer-checked:border-emerald-500 peer-checked:bg-emerald-500/20 flex items-center justify-center shrink-0 mt-0.5 transition">
+                      <div class="h-2.5 w-2.5 rounded-full bg-emerald-500 opacity-0 peer-checked:opacity-100 transition"></div>
+                    </div>
+                    <div>
+                      <h5 class="font-bold text-white text-base">Moderate Consumer</h5>
+                      <p class="text-xs text-slate-400 mt-1">Replacing goods when broken, occasional fashion purchases. (+2.0 kg CO₂e/day)</p>
+                    </div>
+                  </label>
+
+                  <label class="glass-panel-interactive p-5 rounded-xl border border-slate-800 flex items-start gap-4 cursor-pointer">
+                    <input type="radio" name="shopping" value="minimal" class="sr-only peer">
+                    <div class="h-5 w-5 rounded-full border border-slate-600 peer-checked:border-emerald-500 peer-checked:bg-emerald-500/20 flex items-center justify-center shrink-0 mt-0.5 transition">
+                      <div class="h-2.5 w-2.5 rounded-full bg-emerald-500 opacity-0 peer-checked:opacity-100 transition"></div>
+                    </div>
+                    <div>
+                      <h5 class="font-bold text-white text-base">Thrifty / Eco-Shopper</h5>
+                      <p class="text-xs text-slate-400 mt-1">Buying secondhand, high quality, and minimal electronic replacements. (+0.8 kg CO₂e/day)</p>
+                    </div>
+                  </label>
+
+                  <label class="glass-panel-interactive p-5 rounded-xl border border-slate-800 flex items-start gap-4 cursor-pointer">
+                    <input type="radio" name="shopping" value="minimalist" class="sr-only peer">
+                    <div class="h-5 w-5 rounded-full border border-slate-600 peer-checked:border-emerald-500 peer-checked:bg-emerald-500/20 flex items-center justify-center shrink-0 mt-0.5 transition">
+                      <div class="h-2.5 w-2.5 rounded-full bg-emerald-500 opacity-0 peer-checked:opacity-100 transition"></div>
+                    </div>
+                    <div>
+                      <h5 class="font-bold text-white text-base">Extreme Minimalist</h5>
+                      <p class="text-xs text-slate-400 mt-1">Only food and absolute bare essentials; reusing everything. (+0.2 kg CO₂e/day)</p>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              <!-- STEP 5: WASTE -->
+              <div class="quiz-step space-y-6 hidden animate-scale-in" data-step="5">
+                <div class="space-y-2">
+                  <h4 class="text-xl font-bold text-white flex items-center gap-2">
+                    <span class="text-emerald-400 font-mono">Q5.</span> How do you manage your household organic and household waste?
+                  </h4>
+                  <p class="text-sm text-slate-400">Landfills trigger significant methane gas releases. Composting diverts this threat.</p>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <label class="glass-panel-interactive p-5 rounded-xl border border-slate-800 flex items-start gap-4 cursor-pointer">
+                    <input type="radio" name="waste" value="landfill" class="sr-only peer" checked>
+                    <div class="h-5 w-5 rounded-full border border-slate-600 peer-checked:border-emerald-500 peer-checked:bg-emerald-500/20 flex items-center justify-center shrink-0 mt-0.5 transition">
+                      <div class="h-2.5 w-2.5 rounded-full bg-emerald-500 opacity-0 peer-checked:opacity-100 transition"></div>
+                    </div>
+                    <div>
+                      <h5 class="font-bold text-white text-base">All to Landfill</h5>
+                      <p class="text-xs text-slate-400 mt-1">No sorting. All plastics, papers, food scraps put in generic bins. (+3.0 kg CO₂e/day)</p>
+                    </div>
+                  </label>
+                  
+                  <label class="glass-panel-interactive p-5 rounded-xl border border-slate-800 flex items-start gap-4 cursor-pointer">
+                    <input type="radio" name="waste" value="recycle" class="sr-only peer">
+                    <div class="h-5 w-5 rounded-full border border-slate-600 peer-checked:border-emerald-500 peer-checked:bg-emerald-500/20 flex items-center justify-center shrink-0 mt-0.5 transition">
+                      <div class="h-2.5 w-2.5 rounded-full bg-emerald-500 opacity-0 peer-checked:opacity-100 transition"></div>
+                    </div>
+                    <div>
+                      <h5 class="font-bold text-white text-base">Standard Sorting (Recycling)</h5>
+                      <p class="text-xs text-slate-400 mt-1">Recycle cans, cardboards, glass; organic food waste goes to landfill. (+1.8 kg CO₂e/day)</p>
+                    </div>
+                  </label>
+
+                  <label class="glass-panel-interactive p-5 rounded-xl border border-slate-800 flex items-start gap-4 cursor-pointer">
+                    <input type="radio" name="waste" value="compost" class="sr-only peer">
+                    <div class="h-5 w-5 rounded-full border border-slate-600 peer-checked:border-emerald-500 peer-checked:bg-emerald-500/20 flex items-center justify-center shrink-0 mt-0.5 transition">
+                      <div class="h-2.5 w-2.5 rounded-full bg-emerald-500 opacity-0 peer-checked:opacity-100 transition"></div>
+                    </div>
+                    <div>
+                      <h5 class="font-bold text-white text-base">Compost & Full Recycle</h5>
+                      <p class="text-xs text-slate-400 mt-1">Food waste composted at home, strictly sorting cardboard and metals. (+0.7 kg CO₂e/day)</p>
+                    </div>
+                  </label>
+
+                  <label class="glass-panel-interactive p-5 rounded-xl border border-slate-800 flex items-start gap-4 cursor-pointer">
+                    <input type="radio" name="waste" value="zerowaste" class="sr-only peer">
+                    <div class="h-5 w-5 rounded-full border border-slate-600 peer-checked:border-emerald-500 peer-checked:bg-emerald-500/20 flex items-center justify-center shrink-0 mt-0.5 transition">
+                      <div class="h-2.5 w-2.5 rounded-full bg-emerald-500 opacity-0 peer-checked:opacity-100 transition"></div>
+                    </div>
+                    <div>
+                      <h5 class="font-bold text-white text-base">Zero Waste Household</h5>
+                      <p class="text-xs text-slate-400 mt-1">Virtually zero single-use plastics, fully organic compost pile. (+0.2 kg CO₂e/day)</p>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              <!-- Button actions -->
+              <div class="flex items-center justify-between border-t border-slate-800 pt-6 mt-8">
+                <button type="button" id="quiz-btn-prev" class="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-medium transition disabled:opacity-30 disabled:cursor-not-allowed" disabled>
+                  Previous
+                </button>
+                <button type="button" id="quiz-btn-next" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-semibold transition">
+                  Next Step
+                </button>
+              </div>
+
+            </form>
+          </div>
+        </section>
+
+        <!-- MODULE B: TRACKER DASHBOARD -->
+        <section id="panel-dashboard" class="hidden animate-fade-in space-y-6" aria-labelledby="dashboard-heading">
+          <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h3 id="dashboard-heading" class="text-2xl font-bold text-white">Daily Carbon Emissions</h3>
+              <p class="text-sm text-slate-400">Tracking current expenditures against the 10.0 kg default baseline.</p>
+            </div>
+            <button id="dashboard-retake-quiz-btn" class="text-xs font-semibold px-4 py-2 border border-emerald-500/30 hover:border-emerald-500 text-emerald-400 bg-emerald-500/5 hover:bg-emerald-500/10 rounded-xl transition flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 4.79M9 11l3 3L22 4" />
+              </svg>
+              Re-take Intake Quiz
+            </button>
+          </header>
+
+          <!-- Top Stats row -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Stat 1: Total score -->
+            <div class="glass-panel p-6 rounded-2xl border border-slate-800 relative overflow-hidden flex flex-col justify-between h-40">
+              <div>
+                <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Total Emissions Today</p>
+                <div class="flex items-baseline gap-2 mt-2">
+                  <span id="dash-score-display" class="text-4xl font-extrabold text-white">--</span>
+                  <span class="text-sm text-slate-400 font-medium">kg CO₂e</span>
+                </div>
+              </div>
+              <div id="dash-score-rating" class="text-xs px-2.5 py-1 rounded-lg font-semibold inline-block self-start">
+                --
+              </div>
+            </div>
+
+            <!-- Stat 2: Score against baseline progress -->
+            <div class="glass-panel p-6 rounded-2xl border border-slate-800 flex flex-col justify-between h-40">
+              <div>
+                <div class="flex items-center justify-between">
+                  <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Target Baseline Progress</p>
+                  <span id="dash-baseline-percent" class="text-xs font-bold text-slate-300">--%</span>
+                </div>
+                <div class="w-full bg-slate-800 h-3 rounded-full mt-3 overflow-hidden">
+                  <div id="dash-baseline-bar" class="h-full bg-emerald-500 rounded-full transition-all duration-500" style="width: 0%;"></div>
+                </div>
+              </div>
+              <div class="text-xs text-slate-400">
+                Daily Budget Target: <span class="text-emerald-400 font-bold">10.0 kg CO₂e</span>
+              </div>
+            </div>
+
+            <!-- Stat 3: Eco Points & Streak details -->
+            <div class="glass-panel p-6 rounded-2xl border border-slate-800 flex flex-col justify-between h-40">
+              <div class="flex items-start justify-between">
+                <div>
+                  <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Eco Streak</p>
+                  <div class="flex items-center gap-2 mt-2">
+                    <span id="dash-streak-flame" class="text-3xl">🔥</span>
+                    <span id="dash-streak-count" class="text-4xl font-extrabold text-white">0</span>
+                    <span class="text-sm text-slate-400 font-medium">Days</span>
+                  </div>
+                </div>
+                <!-- Multiplier badge -->
+                <div class="bg-yellow-500/10 border border-yellow-500/20 px-2.5 py-1 rounded-xl text-yellow-500 text-xs font-bold">
+                  Multiplier: <span id="dash-streak-multiplier">1.0x</span>
+                </div>
+              </div>
+              <p class="text-xs text-slate-400" id="streak-motivation-text">Complete 3 daily habits to increment your streak!</p>
+            </div>
+          </div>
+
+          <!-- Mid section: Charts & Weekly Leaderboard -->
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            
+            <!-- Emissions Pie Chart -->
+            <div class="glass-panel p-6 rounded-2xl border border-slate-800 lg:col-span-7 flex flex-col min-h-[400px]">
+              <h4 class="text-base font-bold text-white mb-4">Carbon Footprint Breakdown</h4>
+              <div class="flex-1 flex items-center justify-center relative min-h-[280px]">
+                <canvas id="emissionsChart" class="max-h-72"></canvas>
+              </div>
+            </div>
+
+            <!-- Weekly Leaderboard Section -->
+            <div class="glass-panel p-6 rounded-2xl border border-slate-800 lg:col-span-5 flex flex-col min-h-[400px]">
+              <div class="flex items-center justify-between mb-4">
+                <h4 class="text-base font-bold text-white">Weekly Eco-Leaderboard</h4>
+                <span class="text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full">Resetting Sunday</span>
+              </div>
+              
+              <!-- Leaderboard rows list -->
+              <div class="flex-1 space-y-2.5 overflow-y-auto pr-1" id="leaderboard-container">
+                <!-- Javascript will render these list rows dynamically -->
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+        <!-- MODULE C: PERSONALIZED INSIGHTS & MICRO-HABITS -->
+        <section id="panel-insights" class="hidden animate-fade-in space-y-8" aria-labelledby="insights-heading">
+          <header class="text-center sm:text-left space-y-1">
+            <h3 id="insights-heading" class="text-2xl font-bold text-white">Habits, Badges & Simulators</h3>
+            <p class="text-sm text-slate-400">Complete tasks to reduce your footprint, unlock ecological badges, and project long-term impact.</p>
+          </header>
+
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            
+            <!-- Left Panel: Habit checklist & Badge Drawer -->
+            <div class="lg:col-span-7 space-y-6">
+              
+              <!-- Habit checklist Card -->
+              <div class="glass-panel p-6 rounded-2xl border border-slate-800">
+                <div class="flex items-center justify-between mb-5">
+                  <div>
+                    <h4 class="text-base font-bold text-white">Daily Actionable Habits</h4>
+                    <p class="text-xs text-slate-400">Ticking completed actions dynamically cuts today's emissions score in real-time.</p>
+                  </div>
+                  <div class="text-xs font-semibold bg-emerald-500/10 px-2 py-1 rounded text-emerald-400" id="habits-points-earned">
+                    +0 Points
+                  </div>
+                </div>
+
+                <div class="space-y-3" id="habits-checklist-container">
+                  <!-- JS builds items, e.g.
+                  - Ate a fully plant-based lunch (-1.5kg)
+                  - Unplugged vampire electronics (-0.5kg)
+                  - Walked/cycled instead of driving (5km) (-2.0kg)
+                  - Used reusable bags/bottles (-0.4kg)
+                  - Took 5-min shower (-0.8kg)
+                  -->
+                </div>
+              </div>
+
+              <!-- Badge Cabinet Card -->
+              <div class="glass-panel p-6 rounded-2xl border border-slate-800">
+                <div class="mb-5">
+                  <h4 class="text-base font-bold text-white">Ecological Achievement Badges</h4>
+                  <p class="text-xs text-slate-400">Complete objectives to unlock permanent ecological trophies.</p>
+                </div>
+                
+                <!-- Achievements grid -->
+                <div class="grid grid-cols-2 sm:grid-cols-5 gap-4" id="badges-shelf-container">
+                  <!-- Rendered dynamically via javascript -->
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Right Panel: Impact Simulator -->
+            <div class="lg:col-span-5 space-y-6">
+              
+              <!-- Interactive Impact Simulator -->
+              <div class="glass-panel p-6 rounded-2xl border border-slate-800 flex flex-col justify-between min-h-[500px]">
+                <div class="space-y-4">
+                  <div>
+                    <h4 class="text-base font-bold text-white">Annual Impact Simulator</h4>
+                    <p class="text-xs text-slate-400">Simulate structural lifestyle shifts to view projected carbon savings.</p>
+                  </div>
+
+                  <!-- Slider 1: Commute transition -->
+                  <div class="space-y-2">
+                    <div class="flex items-center justify-between text-xs">
+                      <span class="font-medium text-slate-300">Clean Transit Commuting</span>
+                      <span id="sim-commute-display" class="font-bold text-emerald-400">0 days/week</span>
+                    </div>
+                    <input type="range" id="sim-commute-slider" min="0" max="7" value="0" class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-emerald-500">
+                    <p class="text-[10px] text-slate-500">Replacing auto driving with bus, bicycle, or walking.</p>
+                  </div>
+
+                  <!-- Slider 2: Meat consumption -->
+                  <div class="space-y-2">
+                    <div class="flex items-center justify-between text-xs">
+                      <span class="font-medium text-slate-300">Plant-Based Diet Meals</span>
+                      <span id="sim-diet-display" class="font-bold text-emerald-400">0 meals/week</span>
+                    </div>
+                    <input type="range" id="sim-diet-slider" min="0" max="21" value="0" class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-emerald-500">
+                    <p class="text-[10px] text-slate-500">Replacing standard red/white meat meals with vegan ingredients.</p>
+                  </div>
+
+                  <!-- Slider 3: Renewable Heat/Insulation -->
+                  <div class="space-y-2">
+                    <div class="flex items-center justify-between text-xs">
+                      <span class="font-medium text-slate-300">Home Thermostat Offset</span>
+                      <span id="sim-temp-display" class="font-bold text-emerald-400">0 °F change</span>
+                    </div>
+                    <input type="range" id="sim-temp-slider" min="0" max="8" value="0" class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-emerald-500">
+                    <p class="text-[10px] text-slate-500">Lowering heating in winter / raising AC thermostat limit in summer.</p>
+                  </div>
+                </div>
+
+                <!-- Simulation Output -->
+                <div class="mt-8 border-t border-slate-800 pt-6 space-y-4">
+                  <div class="bg-slate-900/80 p-4 rounded-xl border border-slate-800 flex items-center justify-between">
+                    <div>
+                      <p class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Annual Carbon Avoided</p>
+                      <p class="text-2xl font-bold text-white mt-1" id="sim-annual-saved">0 kg CO₂e</p>
+                    </div>
+                    <div class="h-10 w-10 bg-emerald-500/10 border border-emerald-500/30 rounded-xl flex items-center justify-center text-emerald-400 text-lg">
+                      🛡️
+                    </div>
+                  </div>
+
+                  <div class="bg-emerald-500/10 p-4 rounded-xl border border-emerald-500/20 flex items-center justify-between">
+                    <div>
+                      <p class="text-[10px] font-semibold text-emerald-400 uppercase tracking-wider">Equivalent Trees Planted</p>
+                      <p class="text-2xl font-extrabold text-emerald-400 mt-1" id="sim-trees-planted">0 Trees</p>
+                    </div>
+                    <!-- Animated plant icon -->
+                    <div class="h-10 w-10 bg-emerald-500/20 border border-emerald-500/40 rounded-xl flex items-center justify-center text-emerald-300 text-lg animate-pulse">
+                      🌱
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+
+            </div>
+          </div>
+        </section>
+
+        <!-- MODULE E: COMMUNITY LEDGER -->
+        <section id="panel-ledger" class="hidden animate-fade-in space-y-6" aria-labelledby="ledger-heading">
+          <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+              <h3 id="ledger-heading" class="text-2xl font-bold text-white">Community Action Ledger</h3>
+              <p class="text-sm text-slate-400">A transparent audit log documenting the ecological offsets performed by our community members.</p>
+            </div>
+            
+            <!-- Category Filter buttons -->
+            <div class="flex items-center gap-2 overflow-x-auto pb-1 shrink-0" role="group" aria-label="Filter Ledger Categories">
+              <button data-ledger-filter="all" class="ledger-filter-btn px-3.5 py-1.5 rounded-lg bg-emerald-600 text-white border border-emerald-500/20 text-xs font-semibold transition">
+                All
+              </button>
+              <button data-ledger-filter="Transport" class="ledger-filter-btn px-3.5 py-1.5 rounded-lg bg-slate-800 text-slate-400 hover:text-white border border-slate-700/60 text-xs font-semibold transition">
+                Transport
+              </button>
+              <button data-ledger-filter="Diet" class="ledger-filter-btn px-3.5 py-1.5 rounded-lg bg-slate-800 text-slate-400 hover:text-white border border-slate-700/60 text-xs font-semibold transition">
+                Diet
+              </button>
+              <button data-ledger-filter="Energy" class="ledger-filter-btn px-3.5 py-1.5 rounded-lg bg-slate-800 text-slate-400 hover:text-white border border-slate-700/60 text-xs font-semibold transition">
+                Energy
+              </button>
+              <button data-ledger-filter="Waste" class="ledger-filter-btn px-3.5 py-1.5 rounded-lg bg-slate-800 text-slate-400 hover:text-white border border-slate-700/60 text-xs font-semibold transition">
+                Waste
+              </button>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            
+            <!-- Submit Custom Action form -->
+            <div class="lg:col-span-4 glass-panel p-6 rounded-2xl border border-slate-800 self-start">
+              <h4 class="text-base font-bold text-white mb-4">Log Ecological Action</h4>
+              
+              <form id="ledger-submission-form" class="space-y-4" onsubmit="return false;">
+                <div>
+                  <label for="ledger-username" class="block text-xs font-medium text-slate-400 mb-1.5">Your Name / Alias</label>
+                  <input type="text" id="ledger-username" required placeholder="e.g. EcoSam" class="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 rounded-xl px-4 py-2.5 text-sm text-slate-100 placeholder-slate-600 transition">
+                </div>
+
+                <div>
+                  <label for="ledger-action" class="block text-xs font-medium text-slate-400 mb-1.5">Action Performed</label>
+                  <input type="text" id="ledger-action" required placeholder="e.g. Composted 5kg of scraps" class="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 rounded-xl px-4 py-2.5 text-sm text-slate-100 placeholder-slate-600 transition">
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                  <div>
+                    <label for="ledger-category" class="block text-xs font-medium text-slate-400 mb-1.5">Category</label>
+                    <select id="ledger-category" class="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 rounded-xl px-3 py-2.5 text-sm text-slate-100 transition">
+                      <option value="Transport">Transport</option>
+                      <option value="Diet">Diet</option>
+                      <option value="Energy">Energy</option>
+                      <option value="Waste">Waste</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label for="ledger-offset" class="block text-xs font-medium text-slate-400 mb-1.5">Savings (kg CO₂)</label>
+                    <input type="number" id="ledger-offset" min="0.1" step="0.1" required placeholder="e.g. 1.2" class="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 rounded-xl px-4 py-2.5 text-sm text-slate-100 placeholder-slate-600 transition">
+                  </div>
+                </div>
+
+                <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-3 px-4 rounded-xl transition mt-4 flex items-center justify-center gap-2">
+                  <span>Commit to Ledger</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </button>
+              </form>
+            </div>
+
+            <!-- Ledger Feed List -->
+            <div class="lg:col-span-8 glass-panel p-6 rounded-2xl border border-slate-800 min-h-[400px] flex flex-col justify-between">
+              <div>
+                <h4 class="text-base font-bold text-white mb-4">Offset Stream</h4>
+                
+                <!-- Table headers -->
+                <div class="grid grid-cols-12 text-[10px] font-semibold text-slate-500 uppercase tracking-wider border-b border-slate-800/80 pb-2 mb-3 px-4">
+                  <div class="col-span-3">User</div>
+                  <div class="col-span-5">Activity Logged</div>
+                  <div class="col-span-2">Category</div>
+                  <div class="col-span-2 text-right">CO₂ Offset</div>
+                </div>
+
+                <div class="space-y-2" id="ledger-feed-container">
+                  <!-- Loaded via JS -->
+                </div>
+              </div>
+
+              <!-- Pagination / Stats -->
+              <div class="border-t border-slate-800 pt-4 mt-6 flex items-center justify-between text-xs text-slate-400">
+                <span id="ledger-count-display">Showing 0 activities</span>
+                <span class="text-emerald-400 font-bold" id="ledger-total-saved-display">Total Saved: 0.0 kg</span>
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+      </div>
+
+      <!-- SIMULATION CONTROL BAR / SENTRY STUB NOTIFIER -->
+      <footer class="h-14 border-t border-slate-800 bg-slate-900/80 px-6 flex items-center justify-between shrink-0 z-10 text-xs text-slate-400">
+        <div class="flex items-center gap-4">
+          <!-- Sentry integration stub status -->
+          <div class="flex items-center gap-2" id="sentry-status-badge">
+            <span class="relative flex h-2 w-2">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            </span>
+            <span>Sentry SDK Live Active: <span class="font-mono text-emerald-400 font-bold">a1d38cf8</span></span>
+          </div>
+        </div>
+
+        <!-- Grade Simulation Quick Controls -->
+        <div class="flex items-center gap-3">
+          <button id="btn-trigger-crash" class="px-2.5 py-1 bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white border border-red-500/20 rounded-lg font-medium transition cursor-pointer">
+            Trigger Sentry Crash
+          </button>
+          <button id="btn-reset-week" class="px-2.5 py-1 bg-yellow-500/10 hover:bg-yellow-500 text-yellow-500 hover:text-white border border-yellow-500/20 rounded-lg font-medium transition cursor-pointer">
+            Reset Week
+          </button>
+          <button id="btn-clear-cache" class="px-2.5 py-1 bg-slate-850 hover:bg-slate-700 text-slate-300 border border-slate-800 rounded-lg font-medium transition cursor-pointer">
+            Clear Cache
+          </button>
+        </div>
+      </footer>
+
+      <!-- STUNNING EXCEPTION CRASH DIALOG MODAL (Sentry Stub Integration) -->
+      <div id="sentry-crash-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+        <div class="glass-panel p-8 rounded-2xl border border-red-500/30 max-w-md w-full space-y-6 shadow-2xl animate-scale-in">
+          <div class="flex items-center gap-4 text-red-400">
+            <!-- Alert icon -->
+            <div class="h-12 w-12 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-center text-2xl">
+              💥
+            </div>
+            <div>
+              <h4 id="modal-title" class="text-lg font-bold text-white">Mock Exception Intercepted</h4>
+              <p class="text-xs text-red-400">Sentry SDK captured an unhandled runtime error.</p>
+            </div>
+          </div>
+
+          <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 text-[11px] font-mono text-slate-300 overflow-x-auto max-h-40 whitespace-pre" id="sentry-stacktrace">
+            <!-- Error message and trace go here -->
+          </div>
+
+          <div class="text-xs text-slate-400 space-y-1">
+            <p><strong>Environment:</strong> <span class="text-slate-300 font-mono">production-challenge-3</span></p>
+            <p><strong>Release Hash:</strong> <span class="text-slate-300 font-mono">ecotrace@1.2.0+build.784a</span></p>
+          </div>
+
+          <div class="flex justify-end gap-3 pt-2">
+            <button id="sentry-modal-close" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg font-semibold transition text-xs">
+              Dismiss Warning
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Application Logic -->
+  <script src="app.js?v=2"></script>
+</body>
+</html>
